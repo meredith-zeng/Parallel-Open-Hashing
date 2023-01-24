@@ -7,6 +7,9 @@ import util.StringUtil;
 import java.math.BigInteger;
 import java.util.*;
 
+
+// inheritance from Dictionary
+// implement means implement all method from a template
 public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     int nodeCnt;
     Node<K, V>[] table;
@@ -87,15 +90,34 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         table[idx] = new Node<>(hash, key, value, node);
         nodeCnt++;
         if(nodeCnt >= capacity * loadFactor) {
-            rehash();
+//            increaseRehash(capacity * loadFactor);
         }else if(nodeCnt < capacity * reduceFactor){
-            rehash();
+//            reduceRehash(capacity * reduceFactor);
         }
     }
 
-    public void rehash(){
+    private void reduceRehash(int v) {
+        int curCapacity = table.length;
+        Node<K, V>[] curTable = table;
+        int newCapacity = MathUtil.getClosestPrimeLess(curCapacity);
+        if(newCapacity == curCapacity){
+            return;
+        }
+        Node<K, V>[] newTable = new Node[newCapacity];
+
+        this.capacity = newCapacity;
+        this.table = newTable;
+
+        for(int i = 0; i < curCapacity; i++){
+
+        }
+
 
     }
+
+    private void increaseRehash(int v) {
+    }
+
 
     @Override
     public synchronized V remove(Object key) {
@@ -173,9 +195,6 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return false;
     }
 
-    public synchronized void clear() {
-
-    }
 
     @Override
     public synchronized Enumeration<K> keys() {

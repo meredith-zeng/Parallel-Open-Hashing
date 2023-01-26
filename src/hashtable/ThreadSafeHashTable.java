@@ -2,9 +2,6 @@ package hashtable;
 
 import util.MathUtil;
 import util.StringUtil;
-
-
-import java.math.BigInteger;
 import java.util.*;
 
 
@@ -45,6 +42,9 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return this.nodeCnt == 0;
     }
 
+
+
+
     @Override
     public synchronized V get(Object key) {
         Node<K, V>[] curTable = table;
@@ -70,18 +70,16 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         int hash = hashCode(key);
         int idx = (hash & Integer.MAX_VALUE) % curTable.length;
         Node<K, V> node = curTable[idx];
-        while(node != null){
+        while (node != null){
             if(node.hash == hash && node.key.equals(key)){
-                nodeCnt++;
                 V temp = node.value;
                 node.value = value;
                 return temp;
             }
-            node = curTable[idx];
-            addToTable(hash, key, value, idx);
             node = node.next;
         }
-        nodeCnt++;
+
+        addToTable(hash, key, value, idx);
         return null;
     }
 
@@ -90,39 +88,71 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         table[idx] = new Node<>(hash, key, value, node);
         nodeCnt++;
         if(nodeCnt >= capacity * loadFactor) {
-//            increaseRehash(capacity * loadFactor);
-        }else if(nodeCnt < capacity * reduceFactor){
-//            reduceRehash(capacity * reduceFactor);
+            int newCapacity = MathUtil.floorPrime(capacity);
+            if(newCapacity == capacity){
+                return;
+            }
+            increaseRehash(newCapacity);
+        } else if(nodeCnt >= 7 && nodeCnt < capacity * reduceFactor){
+            int newCapacity = MathUtil.ceilingPrime(capacity);
+            if(newCapacity == capacity){
+                return;
+            }
+            reduceRehash(newCapacity);
         }
     }
 
-    private void reduceRehash(int v) {
-        int curCapacity = table.length;
+    private void reduceRehash(int newCapacity) {
+        int oldCap = table.length;
         Node<K, V>[] curTable = table;
-        int newCapacity = MathUtil.getClosestPrimeLess(curCapacity);
-        if(newCapacity == curCapacity){
-            return;
-        }
         Node<K, V>[] newTable = new Node[newCapacity];
 
         this.capacity = newCapacity;
         this.table = newTable;
 
-        for(int i = 0; i < curCapacity; i++){
+        for(int i = 0; i < oldCap; i++){
+
+            Node<K, V> oldNode = curTable[i];
+            while(oldNode != null){
+                Node<K, V> curNode = oldNode;
+                oldNode = oldNode.next;
+                int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
+                curNode.next = newTable[idx];
+                newTable[idx] = curNode;
+            }
 
         }
 
 
     }
 
-    private void increaseRehash(int v) {
+    private void increaseRehash(int newCapacity) {
+        int oldCap = table.length;
+        Node<K, V>[] curTable = table;
+        Node<K, V>[] newTable = new Node[newCapacity];
+
+        this.capacity = newCapacity;
+        this.table = newTable;
+
+        for(int i = 0; i < oldCap; i++){
+
+            Node<K, V> oldNode = curTable[i];
+            while(oldNode != null){
+                Node<K, V> curNode = oldNode;
+                oldNode = oldNode.next;
+                int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
+                curNode.next = newTable[idx];
+                newTable[idx] = curNode;
+            }
+
+        }
     }
 
 
     @Override
     public synchronized V remove(Object key) {
         Node<K, V>[] curTable = table;
-        int hash = key.hashCode();
+        int hash;
         if(key.getClass() == String.class){
             hash = StringHashCode((String) key);
         }else{
@@ -192,20 +222,30 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     }
 
     public synchronized boolean containsKey(Object key) {
+        Node<K, V>[] curTable = table;
+        int hash = key.hashCode();
+        int idx = (hash & Integer.MAX_VALUE) % table.length;
+        Node<K, V> curNode = curTable[idx];
+        while(curNode != null){
+            if((curNode.hash == hash) && curNode.key.equals(key)){
+                return true;
+            }
+            curNode = curNode.next;
+        }
         return false;
     }
 
 
+    // don't require by P1 requirement
     @Override
-    public synchronized Enumeration<K> keys() {
+    public Enumeration<K> keys() {
         return null;
     }
 
     @Override
-    public synchronized Enumeration<V> elements() {
+    public Enumeration<V> elements() {
         return null;
     }
-
 
 
 }

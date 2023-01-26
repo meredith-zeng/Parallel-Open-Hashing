@@ -1,13 +1,12 @@
 package util;
 
 public class MathUtil {
-    public static int[] PRIMES_ARRAY = new int[]{ 7, 17, 31, 61, 127 };
     public static String reverseBits(String hexString){
         int n = Integer.parseInt(hexString, 16);
-        int ans = ((n >> 24) & 0xff)
-                | ((n << 8) & 0xff0000)
-                | ((n >> 8) & 0xff00)
-                | ((n << 24) & 0xff000000);
+        int ans = ((n >> 24) & 0xff);
+        ans = ans | ((n << 8) & 0xff0000);
+        ans = ans | ((n >> 8) & 0xff00);
+        ans = ans | ((n << 24) & 0xff000000);
         return Integer.toHexString(ans);
     }
 
@@ -17,33 +16,36 @@ public class MathUtil {
     // 2^11 = 2048, 2^12 = 4096, 2^13 = 8192, 2^14 = 16384
 
     // 7, 17, 31, 61, 127..
-    public static int getClosestPrimeLess(int num){
+    public static int floorPrime(int num){
         // increase
         int n = (num << 1) + 1;
+        return getClosestPrime(n);
+    }
 
-        // decrese
-//        int n = (num >> 1) + 1;
+    public static int ceilingPrime(int num){
+        // decrease
+        int n = (num >> 1) + 1;
+        return getClosestPrime(n);
+    }
 
+    public static int getClosestPrime(int n){
         if (n % 2 != 0){
             n -= 2;
         }else{
             n--;
         }
 
-        int i, j;
-        for (i = n; i >= 2; i -= 2) {
-            for (j = 3; j <= Math.sqrt(i); j += 2) {
-                if (i % j == 0){
+        for (int i = n; i >= 2; i -= 2) {
+            int cur = 3;
+            for (; cur <= Math.sqrt(i); cur += 2) {
+                if (i % cur == 0){
                     break;
                 }
             }
-            if (j > Math.sqrt(i)){
+            if (cur > Math.sqrt(i)){
                 return i;
             }
         }
-
         return 7;
     }
-
-
 }

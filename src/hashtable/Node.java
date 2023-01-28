@@ -3,10 +3,10 @@ package hashtable;
 import java.util.Map;
 
 public class Node<K, V> implements Map.Entry<K, V>{
-    int hash;
-    K key;
-    V value;
-    Node<K, V> next;
+    public int hash;
+    private K key;
+    private V value;
+    public Node<K, V> next;
 
     public Node(int hash, K key, V value, Node<K, V> next){
         this.hash = hash;

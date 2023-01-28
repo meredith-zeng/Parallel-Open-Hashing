@@ -44,7 +44,7 @@ public class ScannerMode {
         MusicStore musicStore = new MusicStore();
         System.out.println("Please enter operation type(GET/PUT/DELETE): ");
         while(!scanner.hasNext("eof")){
-
+            System.out.println("Please enter operation type(GET/PUT/DELETE): ");
             String operationType = scanner.nextLine();
             if(!operationType.equals("GET") && !operationType.equals("PUT") && !operationType.equals("DELETE")){
                 System.out.println("Please enter valid operation type.");
@@ -70,6 +70,7 @@ public class ScannerMode {
                     String socket = scanner.nextLine();
                     manualDelete(musicStore, songName, socket);
                 }
+                System.out.println("Please enter operation type(GET/PUT/DELETE): ");
             }
 
         }

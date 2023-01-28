@@ -8,28 +8,15 @@ import java.util.*;
 // inheritance from Dictionary
 // implement means implement all method from a template
 public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
-    int nodeCnt;
+    private int nodeCnt;
     Node<K, V>[] table;
-    double loadFactor = 1.1;
-    double reduceFactor = 0.4;
-    int capacity;
-    int MAX_ARRAY_SIZE = Integer.MAX_VALUE;
+    private final double loadFactor = 1.1;
+    private final double reduceFactor = 0.4;
+    private int capacity;
+    private int binaryCapNum;
 
-    /**
-     * Constructor
-     * */
-    public ThreadSafeHashTable(int cap) {
-        if(cap < 0){
-            throw new IllegalArgumentException("Negative Capacity" + cap);
-        }
-        if(cap < 7){
-            capacity = 7;
-        }
-        table = new Node[cap];
-    }
-
-    public ThreadSafeHashTable(){
-        this(7);
+    public int getCapacity(){
+        return this.capacity;
     }
 
     @Override
@@ -43,13 +30,34 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     }
 
 
+    /**
+     * Constructor
+     * */
+    public ThreadSafeHashTable(int cap) {
+        if(cap <= 0){
+            throw new IllegalArgumentException("Negative Capacity or zero" + cap);
+        }
+        if(cap < 7){
+            cap = 7;
+        }
+        this.table = new Node[cap];
+        this.capacity = cap;
+        this.binaryCapNum = 8;
+    }
+
+    public ThreadSafeHashTable(){
+        this(7);
+    }
+
+
 
 
     @Override
     public synchronized V get(Object key) {
         Node<K, V>[] curTable = table;
         int hash = hashCode(key);
-        int idx = (hash & Integer.MAX_VALUE) % curTable.length;
+        int idx = getIdx(key, hash);
+
         Node<?, ?> node = curTable[idx];
         while(node != null){
             if(node.hash == hash && node.key.equals(key)){
@@ -68,7 +76,8 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
 
         Node<K, V>[] curTable = table;
         int hash = hashCode(key);
-        int idx = (hash & Integer.MAX_VALUE) % curTable.length;
+        int idx = getIdx(key, hash);
+
         Node<K, V> node = curTable[idx];
         while (node != null){
             if(node.hash == hash && node.key.equals(key)){
@@ -78,35 +87,45 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
             }
             node = node.next;
         }
-
-        addToTable(hash, key, value, idx);
+        // current idx doesn't have node yet, just add to the table
+        addNode(key, value);
         return null;
     }
 
-    private void addToTable(int hash, K key, V value, int idx) {
+    private synchronized void addNode(K key, V value) {
+        int hash = hashCode(key);
+        int idx = getIdx(key, hash);
         Node<K, V> node = table[idx];
         table[idx] = new Node<>(hash, key, value, node);
         nodeCnt++;
+
         if(nodeCnt >= capacity * loadFactor) {
-            int newCapacity = MathUtil.floorPrime(capacity);
-            if(newCapacity == capacity){
+            int newCapacity = MathUtil.floorPrime(binaryCapNum);
+            if(newCapacity == capacity
+                    || (newCapacity / 10  >= Integer.MAX_VALUE)
+                    || newCapacity < 7){
                 return;
             }
             increaseRehash(newCapacity);
         } else if(nodeCnt >= 7 && nodeCnt < capacity * reduceFactor){
-            int newCapacity = MathUtil.ceilingPrime(capacity);
-            if(newCapacity == capacity){
+            int newCapacity = MathUtil.ceilingPrime(binaryCapNum);
+            if(newCapacity == capacity
+                    || (newCapacity / 10  >= Integer.MAX_VALUE)
+                    || newCapacity < 7){
                 return;
             }
             reduceRehash(newCapacity);
         }
+
+
     }
 
-    private void reduceRehash(int newCapacity) {
+    private synchronized void reduceRehash(int newCapacity) {
         int oldCap = table.length;
         Node<K, V>[] curTable = table;
         Node<K, V>[] newTable = new Node[newCapacity];
 
+        this.binaryCapNum = (binaryCapNum << 1);
         this.capacity = newCapacity;
         this.table = newTable;
 
@@ -116,21 +135,29 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
             while(oldNode != null){
                 Node<K, V> curNode = oldNode;
                 oldNode = oldNode.next;
-                int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
+                int hash = hashCode(curNode.key);
+                int idx;
+                if(!(curNode.key instanceof String)){
+                    idx = hash % newCapacity;
+                }else {
+                    idx = hash;
+                }
                 curNode.next = newTable[idx];
                 newTable[idx] = curNode;
             }
 
         }
+        System.out.println("HashTable rehash and decrease the capacity from " + oldCap + "to " + newCapacity);
 
 
     }
 
-    private void increaseRehash(int newCapacity) {
+    private synchronized void increaseRehash(int newCapacity) {
         int oldCap = table.length;
         Node<K, V>[] curTable = table;
         Node<K, V>[] newTable = new Node[newCapacity];
 
+        this.binaryCapNum = (binaryCapNum >> 1);
         this.capacity = newCapacity;
         this.table = newTable;
 
@@ -140,25 +167,24 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
             while(oldNode != null){
                 Node<K, V> curNode = oldNode;
                 oldNode = oldNode.next;
+//                if(newCapacity == 0){
+//                    System.out.println("/ zero");
+//                }
                 int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
                 curNode.next = newTable[idx];
                 newTable[idx] = curNode;
             }
 
         }
+        System.out.println("HashTable rehash and increase the capacity from " + oldCap + " to " + newCapacity);
     }
 
 
     @Override
     public synchronized V remove(Object key) {
-        Node<K, V>[] curTable = table;
-        int hash;
-        if(key.getClass() == String.class){
-            hash = StringHashCode((String) key);
-        }else{
-            hash = key.hashCode();
-        }
-        int idx = hash % table.length;
+        int hash = hashCode(key);
+        int idx = getIdx(key, hash);
+
         Node<K, V> node = table[idx];
         Node<K, V> preNode = null;
         while(node != null){
@@ -180,9 +206,9 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return null;
     }
 
-    public int hashCode(Object key){
+    public synchronized int hashCode(Object key){
         int hash;
-        if(key.getClass() == String.class){
+        if(key instanceof String){
             hash = StringHashCode((String) key);
         }else{
             hash = key.hashCode();
@@ -191,7 +217,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     }
 
 
-    public int StringHashCode(String keyStr){
+    public synchronized int StringHashCode(String keyStr){
         if(keyStr == null){
             return 0;
         }
@@ -217,14 +243,19 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         if(hashCode >= Integer.MAX_VALUE){
             hashCode = hashCode % Integer.MAX_VALUE;
         }
-
-        return new Long(hashCode).intValue();
+        int hash = new Long(hashCode).intValue();
+//        if(capacity == 0){
+//            System.out.println("/ zero");
+//        }
+        int hashIdx = (hash & Integer.MAX_VALUE) % capacity;
+        return hashIdx;
     }
 
     public synchronized boolean containsKey(Object key) {
         Node<K, V>[] curTable = table;
-        int hash = key.hashCode();
-        int idx = (hash & Integer.MAX_VALUE) % table.length;
+        int hash = hashCode(key);
+        int idx = getIdx(key, hash);
+
         Node<K, V> curNode = curTable[idx];
         while(curNode != null){
             if((curNode.hash == hash) && curNode.key.equals(key)){
@@ -235,6 +266,15 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return false;
     }
 
+    private synchronized int getIdx(Object key, int hash){
+        int idx;
+        if(!(key instanceof String)){
+            idx = hash % capacity;
+        }else {
+            idx = hash;
+        }
+        return idx;
+    }
 
     // don't require by P1 requirement
     @Override

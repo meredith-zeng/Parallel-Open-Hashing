@@ -1,12 +1,30 @@
 package util;
 
+import java.util.Random;
+
 public class MathUtil {
+
+    public static int getRandomOperation(Random random){
+        int curRand = random.nextInt(100);
+        int randomOperation;
+        if(curRand > 0 && curRand < 70){
+            // get
+            randomOperation = 0;
+        }else if(curRand >= 70 && curRand < 90){
+            // put
+            randomOperation = 1;
+        }else{
+            // delete
+            randomOperation = 2;
+        }
+        return randomOperation;
+    }
     public static String reverseBits(String hexString){
         int n = Integer.parseInt(hexString, 16);
         int ans = ((n >> 24) & 0xff);
+        ans = ans | ((n << 24) & 0xff000000);
         ans = ans | ((n << 8) & 0xff0000);
         ans = ans | ((n >> 8) & 0xff00);
-        ans = ans | ((n << 24) & 0xff000000);
         return Integer.toHexString(ans);
     }
 
@@ -18,34 +36,43 @@ public class MathUtil {
     // 7, 17, 31, 61, 127..
     public static int floorPrime(int num){
         // increase
-        int n = (num << 1) + 1;
-        return getClosestPrime(n);
+        int largerN = (num << 1);
+        while(!isPrime(largerN)){
+            largerN++;
+        }
+        int absOfLargerN = Math.abs((num << 1) - largerN);
+        int smallerN = (num << 1);
+        while(!isPrime(smallerN)){
+            smallerN--;
+        }
+        int absOfSmallerN = Math.abs((num << 1) - smallerN);
+        return absOfLargerN >= absOfSmallerN ? smallerN : largerN;
     }
 
     public static int ceilingPrime(int num){
         // decrease
-        int n = (num >> 1) + 1;
-        return getClosestPrime(n);
+        int largerN = (num >> 1);
+        while(!isPrime(largerN)){
+            largerN++;
+        }
+        int absOfLargerN = Math.abs((num >> 1) - largerN);
+        int smallerN = (num >> 1);
+        while(!isPrime(smallerN)){
+            smallerN--;
+        }
+        int absOfSmallerN = Math.abs((num >> 1) - smallerN);
+        return absOfLargerN >= absOfSmallerN ? smallerN : largerN;
     }
 
-    public static int getClosestPrime(int n){
-        if (n % 2 != 0){
-            n -= 2;
-        }else{
-            n--;
-        }
-
-        for (int i = n; i >= 2; i -= 2) {
-            int cur = 3;
-            for (; cur <= Math.sqrt(i); cur += 2) {
-                if (i % cur == 0){
-                    break;
-                }
+    private static boolean isPrime(int num) {
+        int cur = 2, max = (int) Math.sqrt(num);
+        while(cur <= max){
+            if(num % cur == 0){
+                return false;
             }
-            if (cur > Math.sqrt(i)){
-                return i;
-            }
+            cur++;
         }
-        return 7;
+        return true;
     }
+
 }

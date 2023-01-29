@@ -72,6 +72,8 @@ The author create MusicStore to simulate multi-threaded put, get, delete behavio
 
 Please see MusicStore for detailed code.
 
+> Use "eof" to quit.
+
 ## Test case
 ### Random
 Input:
@@ -88,5 +90,90 @@ Time to say goodbye, http://ijk.com:33333
 ```
 
 Output:(Due to the multi-threaded nature, it may be different if you run the same input)
+```java
+/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/bin/java -javaagent:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar=51599:/Applications/IntelliJ IDEA.app/Contents/bin -Dfile.encoding=UTF-8 -classpath /Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/charsets.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/cldrdata.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/dnsns.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/jaccess.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/jfxrt.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/localedata.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/nashorn.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/sunec.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/sunjce_provider.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/sunpkcs11.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/ext/zipfs.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/jce.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/jfr.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/jfxswt.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/jsse.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/management-agent.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/resources.jar:/Users/yulinzeng/Library/Java/JavaVirtualMachines/liberica-1.8.0_322/jre/lib/rt.jar:/Users/yulinzeng/IdeaProjects/Thread-Safe Hashing/out/production/Thread-Safe Hashing MainTest
+Operation mode should be random/manual: 
+random
+Current mode is: random
+Number of threads to run concurrently should larger than 0 and less than Integer.MAX_VALUE: 
+3
+Number of threads to run concurrently is: 3
+Number of operations a thread needs to handle should larger than 0 and less than Integer.MAX_VALUE: 
+20
+Number of operations a thread is: 20
+Enter Several lines of "song name" and "socket".
+Example: Listen to the music, http://foo.com:54321
+Note: 1) Invalid pairs will be neglect.
+      2) Enter "eof" to finish entering lines action
+Listen to the music, http://foo.com:54321
+Time to say goodbye, http://bar.com:12345
+Sound of music, http://xyz.com:40000
+By the river of Babylon, http://bla.com:65535
+Time to say goodbye, http://ijk.com:33333
+eof
+=================Start Execution=================
+Thread 1 : Get "Listen to the music" is not in the hash table
+Thread 2 : Get "Listen to the music" is not in the hash table
+Thread 2 : Get "Time to say goodbye" is not in the hash table
+Thread 2 : Get "Sound of music" is not in the hash table
+Thread 2 : Get "By the river of Babylon" is not in the hash table
+Thread 2 : Get "Time to say goodbye" is not in the hash table
+Thread 2 : Get "Listen to the music" is not in the hash table
+Thread 2 : Get "Time to say goodbye" is not in the hash table
+Thread 2 : Get "Sound of music" is not in the hash table
+Thread 2 : Delete "By the river of Babylon" at  http://bla.com:65535is not in the hash table
+Thread 2 : Get "Time to say goodbye" is not in the hash table
+Thread 3 : Delete "Listen to the music" at  http://foo.com:54321is not in the hash table
+Thread 2 : Put "Listen to the music" at  http://foo.com:54321 in the hash table with index 1
+Thread 1 : Delete "Time to say goodbye" at  http://bar.com:12345is not in the hash table
+Thread 1 : Get "Sound of music" is not in the hash table
+Thread 1 : Get "By the river of Babylon" is not in the hash table
+Thread 1 : Get "Time to say goodbye" is not in the hash table
+Thread 1 : Put "Listen to the music" at  http://foo.com:54321 already in the hash table with index 1
+Thread 1 : Put "Time to say goodbye" at  http://bar.com:12345 in the hash table with index 1
+Thread 1 : Get "Sound of music" is not in the hash table
+Thread 1 : Delete "By the river of Babylon" at  http://bla.com:65535is not in the hash table
+Thread 1 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 1 : Delete "Listen to the music" at  http://foo.com:54321from the hash table
+Thread 1 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 1 : Get "Sound of music" is not in the hash table
+Thread 1 : Get "By the river of Babylon" is not in the hash table
+Thread 1 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 1 : Get "Listen to the music" is not in the hash table
+Thread 1 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 1 : Get "Sound of music" is not in the hash table
+Thread 1 : Get "By the river of Babylon" is not in the hash table
+Thread 1 : Delete "Time to say goodbye" at  http://ijk.com:33333is not in the hash table
+Thread 1 finished all tasks. Now this thread exit.
+Thread 2 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 2 : Get "Sound of music" is not in the hash table
+Thread 2 : Get "By the river of Babylon" is not in the hash table
+Thread 2 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 3 : Put "Time to say goodbye" at  http://bar.com:12345 already in the hash table with index 1
+Thread 3 : Get "Sound of music" is not in the hash table
+Thread 3 : Put "By the river of Babylon" at  http://bla.com:65535 in the hash table with index 3
+Thread 3 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 3 : Get "Listen to the music" is not in the hash table
+Thread 3 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 3 : Put "Sound of music" at  http://xyz.com:40000 in the hash table with index 6
+Thread 3 : Get "By the river of Babylon" can be download from [ http://bla.com:65535]
+Thread 3 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 3 : Put "Listen to the music" at  http://foo.com:54321 in the hash table with index 1
+Thread 3 : Put "Time to say goodbye" at  http://bar.com:12345 already in the hash table with index 1
+Thread 3 : Get "Sound of music" can be download from [ http://xyz.com:40000]
+Thread 3 : Put "By the river of Babylon" at  http://bla.com:65535 already in the hash table with index 3
+Thread 3 : Get "Time to say goodbye" can be download from [ http://bar.com:12345]
+Thread 3 : Get "Listen to the music" can be download from [ http://foo.com:54321]
+Thread 3 : Put "Time to say goodbye" at  http://bar.com:12345 already in the hash table with index 1
+Thread 3 : Delete "Sound of music" at  http://xyz.com:40000from the hash table
+Thread 3 : Put "By the river of Babylon" at  http://bla.com:65535 already in the hash table with index 3
+Thread 3 : Put "Time to say goodbye" at  http://ijk.com:33333 already in the hash table with index 1
+Thread 3 finished all tasks. Now this thread exit.
+Thread 2 : Get "Listen to the music" can be download from [ http://foo.com:54321]
+Thread 2 : Get "Time to say goodbye" can be download from [ http://ijk.com:33333]
+Thread 2 : Get "Sound of music" is not in the hash table
+Thread 2 : Delete "By the river of Babylon" at  http://bla.com:65535from the hash table
+Thread 2 : Put "Time to say goodbye" at  http://ijk.com:33333 already in the hash table with index 1
+Thread 2 finished all tasks. Now this thread exit.
 
-![](../../../../var/folders/b3/5bzwhh5s3fqcsndt42hdt4wr0000gn/T/TemporaryItems/NSIRD_screencaptureui_KdPx3n/Screenshot 2023-01-29 at 2.43.16 PM.png)
+```

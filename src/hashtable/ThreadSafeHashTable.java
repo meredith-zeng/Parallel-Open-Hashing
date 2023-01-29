@@ -56,7 +56,6 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         }
 
         List<String> chunks = StringUtil.chunkSplit(keyStr);
-
         for(int i = 0; i < chunks.size(); i += 2){
             String beforeReverseStr = chunks.get(i);
             String afterReverseStr = MathUtil.reverseBits(beforeReverseStr);
@@ -69,6 +68,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
 
             chunks.set(i, afterReverseStr.toUpperCase());
         }
+
         Long hashCode = Long.valueOf(chunks.get(0), 16);
         for(int i = 1; i < chunks.size(); i++){
             hashCode ^= Long.valueOf(chunks.get(i), 16);
@@ -76,9 +76,9 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         if(hashCode >= Integer.MAX_VALUE){
             hashCode = hashCode % Integer.MAX_VALUE;
         }
+
         int hash = new Long(hashCode).intValue();
-        int hashIdx = (hash & Integer.MAX_VALUE) % capacity;
-        return hashIdx;
+        return (hash & Integer.MAX_VALUE) % capacity;
     }
 
     @Override

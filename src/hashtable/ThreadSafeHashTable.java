@@ -89,7 +89,9 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
 
         Node<?, ?> node = curTable[idx];
         while(node != null){
-            if(node.hash == hash && node.getKey().equals(key)){
+            if(node != null
+                    && node.hash == hash
+                    && node.getKey().equals(key)){
                 return (V) node.getValue();
             }
             node = node.next;
@@ -110,9 +112,9 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         Node<K, V> node = curTable[idx];
         while (node != null){
             if(node.hash == hash && node.getKey().equals(key)){
-                V temp = node.getValue();
+                V preVal = node.getValue();
                 node.setValue(value);
-                return temp;
+                return preVal;
             }
             node = node.next;
         }
@@ -138,7 +140,6 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
                 }else if(preNode == null){
                     table[idx] = node.next;
                 }
-
                 nodeCnt--;
                 V temp = node.getValue();
                 node.setValue(null);
@@ -146,6 +147,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
             }
             preNode = node;
             node = node.next;
+
         }
         return null;
     }
@@ -178,7 +180,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return false;
     }
 
-    private synchronized int getIdx(Object key, int hash){
+    public synchronized int getIdx(Object key, int hash){
         int idx;
         if(!(key instanceof String)){
             idx = hash % capacity;
@@ -200,7 +202,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         if(nodeCnt >= capacity * loadFactor) {
             int newCapacity = MathUtil.floorPrime(binaryCapNum);
             if(newCapacity == capacity
-                    || (newCapacity / 10  >= Integer.MAX_VALUE)
+                    || (newCapacity / 10 + Integer.MAX_VALUE % 10 >= Integer.MAX_VALUE)
                     || newCapacity < 7){
                 return;
             }
@@ -233,12 +235,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
                 Node<K, V> curNode = oldNode;
                 oldNode = oldNode.next;
                 int hash = hashCode(curNode.getKey());
-                int idx;
-                if(!(curNode.getKey() instanceof String)){
-                    idx = hash % newCapacity;
-                }else {
-                    idx = hash;
-                }
+                int idx = getIdx(oldNode.getKey(), hash);
                 curNode.next = newTable[idx];
                 newTable[idx] = curNode;
             }
@@ -265,7 +262,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
                 Node<K, V> curNode = oldNode;
                 oldNode = oldNode.next;
 
-                int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
+                int idx = curNode.hash % newCapacity;
                 curNode.next = newTable[idx];
                 newTable[idx] = curNode;
             }

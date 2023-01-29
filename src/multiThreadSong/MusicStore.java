@@ -114,10 +114,11 @@ public class MusicStore{
     }
 
     public synchronized void putMusic(String songName, String socket, int threadId){
-
+        socket = socket.replace(" ","");
         Object cur = musicTable.put(songName, socket);
         int hash = musicTable.hashCode(songName);
-        int idx = (hash & Integer.MAX_VALUE) % musicTable.getCapacity();
+        int idx = musicTable.getIdx(songName, hash);
+
         if(cur == null){
             // “<thread id>: put <song name> at <socket> in the hash table with index <index>”)
             System.out.println("Thread " + threadId + " : Put \"" + songName + "\" at " + socket + " in the hash table with index " + idx);
@@ -135,10 +136,10 @@ public class MusicStore{
                 || !musicTable.containsKey(songName)
                 || !musicTable.get(songName).equals(socket)){
             // (e.g., “<thread id>: delete <song name> at <socket> is not in the hash table”).
-            System.out.println("Thread " + threadId + " : Delete \"" + songName + "\" at " + socket + "is not in the hash table");
+            System.out.println("Thread " + threadId + " : Delete \"" + songName + "\" at " + socket + " is not in the hash table");
             return;
         }
         musicTable.remove(songName);
-        System.out.println("Thread " + threadId + " : Delete \"" + songName + "\" at " + socket + "from the hash table");
+        System.out.println("Thread " + threadId + " : Delete \"" + songName + "\" at " + socket + " from the hash table");
     }
 }

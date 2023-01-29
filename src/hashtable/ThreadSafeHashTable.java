@@ -50,7 +50,36 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     }
 
 
+    public synchronized int StringHashCode(String keyStr){
+        if(keyStr == null){
+            return 0;
+        }
 
+        List<String> chunks = StringUtil.chunkSplit(keyStr);
+
+        for(int i = 0; i < chunks.size(); i += 2){
+            String beforeReverseStr = chunks.get(i);
+            String afterReverseStr = MathUtil.reverseBits(beforeReverseStr);
+
+            Long curVal = Long.valueOf(afterReverseStr, 16);
+            if(curVal >= Integer.MAX_VALUE){
+                curVal = curVal % Integer.MAX_VALUE;
+            }
+            afterReverseStr = Long.toHexString(curVal);
+
+            chunks.set(i, afterReverseStr.toUpperCase());
+        }
+        Long hashCode = Long.valueOf(chunks.get(0), 16);
+        for(int i = 1; i < chunks.size(); i++){
+            hashCode ^= Long.valueOf(chunks.get(i), 16);
+        }
+        if(hashCode >= Integer.MAX_VALUE){
+            hashCode = hashCode % Integer.MAX_VALUE;
+        }
+        int hash = new Long(hashCode).intValue();
+        int hashIdx = (hash & Integer.MAX_VALUE) % capacity;
+        return hashIdx;
+    }
 
     @Override
     public synchronized V get(Object key) {
@@ -92,11 +121,80 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return null;
     }
 
+    @Override
+    public synchronized V remove(Object key) {
+        int hash = hashCode(key);
+        int idx = getIdx(key, hash);
+
+        Node<K, V> node = table[idx];
+        Node<K, V> preNode = null;
+
+        while(node != null){
+            if(node != null
+                    && node.hash == hash
+                    && node.getKey().equals(key)){
+                if(preNode != null){
+                    preNode.next = node.next;
+                }else if(preNode == null){
+                    table[idx] = node.next;
+                }
+
+                nodeCnt--;
+                V temp = node.getValue();
+                node.setValue(null);
+                return temp;
+            }
+            preNode = node;
+            node = node.next;
+        }
+        return null;
+    }
+
+    public synchronized int hashCode(Object key){
+        int hash;
+        if(key instanceof String){
+            hash = StringHashCode((String) key);
+        }else{
+            hash = key.hashCode();
+        }
+        return hash;
+    }
+
+
+    public synchronized boolean containsKey(Object key) {
+        Node<K, V>[] curTable = table;
+        int hash = hashCode(key);
+        int idx = getIdx(key, hash);
+
+        Node<K, V> curNode = curTable[idx];
+        while(curNode != null){
+            if(curNode != null
+                    && curNode.hash == hash
+                    && curNode.getKey().equals(key)){
+                return true;
+            }
+            curNode = curNode.next;
+        }
+        return false;
+    }
+
+    private synchronized int getIdx(Object key, int hash){
+        int idx;
+        if(!(key instanceof String)){
+            idx = hash % capacity;
+        }else {
+            idx = hash;
+        }
+        return idx;
+    }
+
     private synchronized void addNode(K key, V value) {
         int hash = hashCode(key);
         int idx = getIdx(key, hash);
         Node<K, V> node = table[idx];
-        table[idx] = new Node<>(hash, key, value, node);
+
+        Node<K, V> newNode = new Node<>(hash, key, value, node);
+        table[idx] = newNode;
         nodeCnt++;
 
         if(nodeCnt >= capacity * loadFactor) {
@@ -166,6 +264,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
             while(oldNode != null){
                 Node<K, V> curNode = oldNode;
                 oldNode = oldNode.next;
+
                 int idx = (curNode.hash & Integer.MAX_VALUE) % newCapacity;
                 curNode.next = newTable[idx];
                 newTable[idx] = curNode;
@@ -175,102 +274,6 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         System.out.println("HashTable rehash and increase the capacity from " + oldCap + " to " + newCapacity);
     }
 
-
-    @Override
-    public synchronized V remove(Object key) {
-        int hash = hashCode(key);
-        int idx = getIdx(key, hash);
-
-        Node<K, V> node = table[idx];
-        Node<K, V> preNode = null;
-        while(node != null){
-            if(node.hash == hash && node.getKey().equals(key)){
-                if(preNode != null){
-                    preNode.next = node.next;
-                }else if(preNode == null){
-                    table[idx] = node.next;
-                }
-
-                nodeCnt--;
-                V temp = node.getValue();
-                node.setValue(null);
-                return temp;
-            }
-            preNode = node;
-            node = node.next;
-        }
-        return null;
-    }
-
-    public synchronized int hashCode(Object key){
-        int hash;
-        if(key instanceof String){
-            hash = StringHashCode((String) key);
-        }else{
-            hash = key.hashCode();
-        }
-        return hash;
-    }
-
-
-    public synchronized int StringHashCode(String keyStr){
-        if(keyStr == null){
-            return 0;
-        }
-
-        List<String> chunks = StringUtil.chunkSplit(keyStr);
-
-        for(int i = 0; i < chunks.size(); i += 2){
-            String beforeReverseStr = chunks.get(i);
-            String afterReverseStr = MathUtil.reverseBits(beforeReverseStr);
-
-            Long curVal = Long.valueOf(afterReverseStr, 16);
-            if(curVal >= Integer.MAX_VALUE){
-                curVal = curVal % Integer.MAX_VALUE;
-            }
-            afterReverseStr = Long.toHexString(curVal);
-
-            chunks.set(i, afterReverseStr.toUpperCase());
-        }
-        Long hashCode = Long.valueOf(chunks.get(0), 16);
-        for(int i = 1; i < chunks.size(); i++){
-            hashCode ^= Long.valueOf(chunks.get(i), 16);
-        }
-        if(hashCode >= Integer.MAX_VALUE){
-            hashCode = hashCode % Integer.MAX_VALUE;
-        }
-        int hash = new Long(hashCode).intValue();
-//        if(capacity == 0){
-//            System.out.println("/ zero");
-//        }
-        int hashIdx = (hash & Integer.MAX_VALUE) % capacity;
-        return hashIdx;
-    }
-
-    public synchronized boolean containsKey(Object key) {
-        Node<K, V>[] curTable = table;
-        int hash = hashCode(key);
-        int idx = getIdx(key, hash);
-
-        Node<K, V> curNode = curTable[idx];
-        while(curNode != null){
-            if((curNode.hash == hash) && curNode.getKey().equals(key)){
-                return true;
-            }
-            curNode = curNode.next;
-        }
-        return false;
-    }
-
-    private synchronized int getIdx(Object key, int hash){
-        int idx;
-        if(!(key instanceof String)){
-            idx = hash % capacity;
-        }else {
-            idx = hash;
-        }
-        return idx;
-    }
 
     // don't require by P1 requirement
     @Override

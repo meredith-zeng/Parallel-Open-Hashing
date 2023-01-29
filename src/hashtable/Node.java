@@ -4,9 +4,11 @@ import java.util.Map;
 
 public class Node<K, V> implements Map.Entry<K, V>{
     public int hash;
+    public Node<K, V> next;
+
     private K key;
     private V value;
-    public Node<K, V> next;
+
 
     public Node(int hash, K key, V value, Node<K, V> next){
         this.hash = hash;

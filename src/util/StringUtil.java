@@ -2,8 +2,11 @@ package util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class StringUtil {
+    public static final String URL_CORRECT_PATTERN = "(http?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z]{2,6})(:\\d{1,5})([\\/\\w\\.-]*)*\\/?";
+
     public static List<String> chunkSplit(String str){
         List<String> chunks = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -23,4 +26,10 @@ public class StringUtil {
         }
         return chunks;
     }
+
+    public static boolean urlPatternCheck(String url){
+        return Pattern.matches(URL_CORRECT_PATTERN,url);
+    }
+
+
 }

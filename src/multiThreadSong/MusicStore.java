@@ -1,6 +1,7 @@
 package multiThreadSong;
 
 import hashtable.ThreadSafeHashTable;
+import util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,11 +48,17 @@ public class MusicStore{
             if(curStr == null || curStr.length >= 3 || curStr.length <= 1){
                 continue;
             }
+            String url = curStr[1];
+            url = url.replace(" ","");
+            boolean urlFlag = StringUtil.urlPatternCheck(url);
+            if(!urlFlag){
+                continue;
+            }
             songAndSocketList.add(curStr);
         }
         this.songAndSocketList = songAndSocketList;
         if(songAndSocketList == null || songAndSocketList.size() == 0){
-            System.out.println("Lines of valid song name and socket should larger than 0 and less than Integer.MAX_VALUE.");
+            System.out.println("Lines of \"valid\" song name and socket should larger than 0 and less than Integer.MAX_VALUE.");
             System.out.println("This run has been terminated.");
             return;
         }
@@ -59,7 +66,7 @@ public class MusicStore{
 
         this.musicTable = new ThreadSafeHashTable<>();
 
-
+        randomModelThreadExecute();
     }
 
     public void randomModelThreadExecute() {
@@ -95,7 +102,7 @@ public class MusicStore{
         }
     }
 
-    public void getMusic(String songName, int threadId){
+    public synchronized void getMusic(String songName, int threadId){
 //        (e.g., “<thread id>: get <song name> is not in the hash table”)
         if(!musicTable.containsKey(songName)){
             System.out.println("Thread " + threadId + " : Get \"" + songName + "\" is not in the hash table");
@@ -106,7 +113,7 @@ public class MusicStore{
         System.out.println("Thread " + threadId + " : Get \"" + songName + "\" can be download from " + "[" + socket + "]");
     }
 
-    public void putMusic(String songName, String socket, int threadId){
+    public synchronized void putMusic(String songName, String socket, int threadId){
 
         Object cur = musicTable.put(songName, socket);
         int hash = musicTable.hashCode(songName);
@@ -121,7 +128,7 @@ public class MusicStore{
         System.out.println("Thread " + threadId + " : Put \"" + songName + "\" at " + socket + " already in the hash table with index " + idx);
     }
 
-    public void deleteMusic(String songName, String socket, int threadId){
+    public synchronized void deleteMusic(String songName, String socket, int threadId){
         if(musicTable == null
                 || musicTable.isEmpty()
                 || (musicTable.size() == 0)

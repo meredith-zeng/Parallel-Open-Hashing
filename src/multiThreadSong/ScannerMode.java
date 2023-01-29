@@ -5,6 +5,30 @@ import java.util.List;
 import java.util.Scanner;
 
 public class ScannerMode {
+    public static void threadSafeScanner(Scanner scanner){
+        // 1) manual or random mode
+        System.out.println("Operation mode should be random/manual: ");
+
+        String operationMode = scanner.nextLine();
+
+        int testCnt = 0;
+        while(!operationMode.equals("random") && !operationMode.equals("manual") && testCnt < 10){
+            testCnt++;
+            System.out.println("Operation mode can only be random/manual.");
+            if(testCnt == 10){
+                System.out.println("You enter wrong mode ten times. Execution end.");
+                return;
+            }
+        }
+        System.out.println("Current mode is: " + operationMode);
+
+        if(operationMode.equals("random")){
+            ScannerMode.randomMode(scanner);
+        }else if(operationMode.equals("manual")){
+            ScannerMode.manualMode(scanner);
+        }
+
+    }
     public static void randomMode(Scanner scanner){
         // For random mode
         // 1) number of threads to run concurrently
@@ -33,7 +57,7 @@ public class ScannerMode {
         System.out.println("=================Start Execution=================");
         MusicStore musicStore = new MusicStore(concurrentThreadNum, cntOfOperations, songList);
 
-        musicStore.randomModelThreadExecute();
+
     }
 
     // For manual mode

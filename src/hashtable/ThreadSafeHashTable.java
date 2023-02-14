@@ -30,9 +30,6 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     }
 
 
-    /**
-     * Constructor
-     * */
     public ThreadSafeHashTable(int cap) {
         if(cap <= 0){
             throw new IllegalArgumentException("Negative Capacity or zero" + cap);
@@ -81,6 +78,58 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
         return (hash & Integer.MAX_VALUE) % capacity;
     }
 
+    private synchronized void reduceRehash(int newCapacity) {
+        int oldCap = table.length;
+        Node<K, V>[] curTable = table;
+        Node<K, V>[] newTable = new Node[newCapacity];
+
+        this.binaryCapNum = (binaryCapNum << 1);
+        this.capacity = newCapacity;
+        this.table = newTable;
+
+        for(int i = 0; i < oldCap; i++){
+            Node<K, V> oldNode = curTable[i];
+            while(oldNode != null){
+                Node<K, V> curNode = oldNode;
+                oldNode = oldNode.next;
+                int hash = hashCode(curNode.getKey());
+                int idx = getIdx(oldNode.getKey(), hash);
+                curNode.next = newTable[idx];
+                newTable[idx] = curNode;
+            }
+
+        }
+        System.out.println("HashTable rehash and decrease the capacity from " + oldCap + "to " + newCapacity);
+
+
+    }
+
+    private synchronized void increaseRehash(int newCapacity) {
+        int oldCap = table.length;
+        Node<K, V>[] curTable = table;
+        Node<K, V>[] newTable = new Node[newCapacity];
+
+        this.binaryCapNum = (binaryCapNum >> 1);
+        this.capacity = newCapacity;
+        this.table = newTable;
+
+        for(int i = 0; i < oldCap; i++){
+
+            Node<K, V> oldNode = curTable[i];
+            while(oldNode != null){
+                Node<K, V> curNode = oldNode;
+                oldNode = oldNode.next;
+
+                int idx = curNode.hash % newCapacity;
+                curNode.next = newTable[idx];
+                newTable[idx] = curNode;
+            }
+
+        }
+        System.out.println("HashTable rehash and increase the capacity from " + oldCap + " to " + newCapacity);
+    }
+
+
     @Override
     public synchronized V get(Object key) {
         Node<K, V>[] curTable = table;
@@ -102,7 +151,8 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
     @Override
     public synchronized V put(K key, V value) {
         if(value == null || key == null){
-            throw new NullPointerException();
+            System.out.println("key and value can not both be null.");
+            return null;
         }
 
         Node<K, V>[] curTable = table;
@@ -220,56 +270,7 @@ public class ThreadSafeHashTable<K, V> extends Dictionary<K,V> {
 
     }
 
-    private synchronized void reduceRehash(int newCapacity) {
-        int oldCap = table.length;
-        Node<K, V>[] curTable = table;
-        Node<K, V>[] newTable = new Node[newCapacity];
 
-        this.binaryCapNum = (binaryCapNum << 1);
-        this.capacity = newCapacity;
-        this.table = newTable;
-
-        for(int i = 0; i < oldCap; i++){
-            Node<K, V> oldNode = curTable[i];
-            while(oldNode != null){
-                Node<K, V> curNode = oldNode;
-                oldNode = oldNode.next;
-                int hash = hashCode(curNode.getKey());
-                int idx = getIdx(oldNode.getKey(), hash);
-                curNode.next = newTable[idx];
-                newTable[idx] = curNode;
-            }
-
-        }
-        System.out.println("HashTable rehash and decrease the capacity from " + oldCap + "to " + newCapacity);
-
-
-    }
-
-    private synchronized void increaseRehash(int newCapacity) {
-        int oldCap = table.length;
-        Node<K, V>[] curTable = table;
-        Node<K, V>[] newTable = new Node[newCapacity];
-
-        this.binaryCapNum = (binaryCapNum >> 1);
-        this.capacity = newCapacity;
-        this.table = newTable;
-
-        for(int i = 0; i < oldCap; i++){
-
-            Node<K, V> oldNode = curTable[i];
-            while(oldNode != null){
-                Node<K, V> curNode = oldNode;
-                oldNode = oldNode.next;
-
-                int idx = curNode.hash % newCapacity;
-                curNode.next = newTable[idx];
-                newTable[idx] = curNode;
-            }
-
-        }
-        System.out.println("HashTable rehash and increase the capacity from " + oldCap + " to " + newCapacity);
-    }
 
 
     // don't require by P1 requirement

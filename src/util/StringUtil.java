@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 public class StringUtil {
     public static final String URL_CORRECT_PATTERN = "(http?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z]{2,6})(:\\d{1,5})([\\/\\w\\.-]*)*\\/?";
+    public static final String STRING_TO_INT_PATTERN = "^[0-9]*$";
 
     public static List<String> chunkSplit(String str){
         List<String> chunks = new ArrayList<>();
@@ -31,5 +32,8 @@ public class StringUtil {
         return Pattern.matches(URL_CORRECT_PATTERN,url);
     }
 
+    public static boolean stringToIntCheck(String str){
+        return Pattern.matches(STRING_TO_INT_PATTERN, str);
+    }
 
 }

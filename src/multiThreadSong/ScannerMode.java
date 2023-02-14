@@ -1,18 +1,24 @@
 package multiThreadSong;
 
+import util.StringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class ScannerMode {
+    public static int concurrentThreadNum = 0;
+    public static int cntOfOperations = 0;
+    public static List<String> songList = new ArrayList<>();
+
     public static void threadSafeScanner(Scanner scanner){
         // 1) manual or random mode
-        System.out.println("Operation mode should be random/manual: ");
+        System.out.println("Operation mode should be Random/Manual: ");
 
         String operationMode = scanner.nextLine();
 
         int testCnt = 0;
-        while(!operationMode.equals("random") && !operationMode.equals("manual") && testCnt < 10){
+        while(!operationMode.equals("Random") && !operationMode.equals("Manual") && testCnt < 10){
             testCnt++;
             System.out.println("Operation mode can only be random/manual.");
             if(testCnt == 10){
@@ -22,9 +28,9 @@ public class ScannerMode {
         }
         System.out.println("Current mode is: " + operationMode);
 
-        if(operationMode.equals("random")){
+        if(operationMode.equals("Random")){
             ScannerMode.randomMode(scanner);
-        }else if(operationMode.equals("manual")){
+        }else if(operationMode.equals("Manual")){
             ScannerMode.manualMode(scanner);
         }
 
@@ -36,23 +42,50 @@ public class ScannerMode {
         // 3) lines of “song name” and “socket”.
 
         System.out.println("Number of threads to run concurrently should larger than 0 and less than Integer.MAX_VALUE: ");
-        int concurrentThreadNum = scanner.nextInt();
-//        int concurrentThreadNum = 3;
-        System.out.println("Number of threads to run concurrently is: " + concurrentThreadNum);
-//
-        System.out.println("Number of operations a thread needs to handle should larger than 0 and less than Integer.MAX_VALUE: ");
-        int cntOfOperations = scanner.nextInt();
-//        int cntOfOperations = 20;
-        System.out.println("Number of operations a thread is: " + cntOfOperations);
+        int parameterCnt = 0;
+        while(scanner.hasNext()){
+            String nextLine = scanner.nextLine();
+            if(nextLine.startsWith("#")){
+                continue;
+            }
+            if(parameterCnt == 0){
+                if(!StringUtil.stringToIntCheck(nextLine)){
+                    System.out.println("Invalid input number, execute end.");
+                    return;
+                }
+                concurrentThreadNum = Integer.parseInt(nextLine);
+                System.out.println("Number of threads to run concurrently is: " + concurrentThreadNum);
+                parameterCnt++;
+                continue;
+            }
 
-        List<String> songList = new ArrayList<>();
-        System.out.println("Enter Several lines of \"song name\" and \"socket\".");
-        System.out.println("Example: Listen to the music, http://foo.com:54321");
-        System.out.println("Note: 1) Invalid pairs will be neglect.");
-        System.out.println("      2) Enter \"eof\" to finish entering lines action");
-        while(!scanner.hasNext("eof")){
-            String songStr = scanner.nextLine();
-            songList.add(songStr);
+            System.out.println("Number of operations a thread needs to handle should larger than 0 and less than Integer.MAX_VALUE: ");
+            if(parameterCnt == 1){
+                if(!StringUtil.stringToIntCheck(nextLine)){
+                    System.out.println("Invalid input number, execute end.");
+                    return;
+                }
+                cntOfOperations = Integer.parseInt(nextLine);
+                System.out.println("Number of operations a thread is: " + cntOfOperations);
+                parameterCnt++;
+                continue;
+            }
+
+            System.out.println("Enter Several lines of \"song name\" and \"socket\".");
+            System.out.println("Example: Listen to the music, http://foo.com:54321");
+            System.out.println("Note: 1) Invalid pairs will be neglect.");
+            System.out.println("      2) Enter \"eof\" to finish entering lines action");
+            if (parameterCnt >= 2){
+                parameterCnt++;
+                while(scanner.hasNext()){
+                    String songStr = scanner.nextLine();
+                    songList.add(songStr);
+                }
+                break;
+            }
+
+
+
         }
         System.out.println("=================Start Execution=================");
         MusicStore musicStore = new MusicStore(concurrentThreadNum, cntOfOperations, songList);
